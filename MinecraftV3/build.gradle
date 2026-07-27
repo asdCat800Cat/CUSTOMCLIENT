@@ -1,0 +1,120 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            name = "forge"
+            url = "https://files.minecraftforge.net/maven"
+        }
+        maven {
+            url = "https://jitpack.io"
+        }
+        maven {
+            name = "SpongePowered"
+            url = "https://repo.spongepowered.org/repository/maven-public/"
+        }
+        maven {
+            url = "https://plugins.gradle.org/m2"
+        }
+    }
+    dependencies {
+        classpath "net.minecraftforge.gradle:ForgeGradle:2.1-SNAPSHOT"
+        classpath "org.spongepowered:mixingradle:0.6-SNAPSHOT"
+    }
+}
+
+apply plugin: "net.minecraftforge.gradle.forge"
+apply plugin: "org.spongepowered.mixin"
+apply plugin: "idea"
+
+version          = "v0.1"
+group            = "arsenic"
+archivesBaseName = "Arsenic"
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+compileJava.options.encoding = "UTF-8"
+
+minecraft {
+    version    = "1.8.9-11.15.1.2318-1.8.9"
+    runDir     = "run"
+    mappings   = "stable_20"
+    clientJvmArgs += "-Dfml.coreMods.load=arsenic.injection.MixinLoader"
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "SpongePowered"
+        url  = "https://repo.spongepowered.org/repository/maven-public/"
+    }
+    jcenter()
+}
+
+configurations {
+    embed
+    compile.extendsFrom embed
+}
+
+dependencies {
+    embed("org.spongepowered:mixin:0.6.12-SNAPSHOT") {
+        exclude module: "launchwrapper"  // provided by Forge
+        exclude module: "guava"          // provided by Minecraft
+        exclude module: "gson"           // provided by Minecraft
+        exclude module: "log4j"          // provided by Minecraft
+        exclude module: "commons-io"     // provided by Minecraft/Forge
+    }
+    compileOnly "org.jetbrains:annotations:23.0.0"
+    embed 'com.jagrosh:DiscordIPC:0.4'
+    embed("org.reflections:reflections:0.10.2") {
+        exclude module: "guava"  // provided by Minecraft
+    }
+    embed("org.javassist:javassist:3.28.0-GA")
+}
+
+
+processResources {
+    inputs.property "version",   project.version
+    inputs.property "mcversion", project.minecraft.version
+
+    from(sourceSets.main.resources.srcDirs) {
+        include "mcmod.info"
+        expand version: project.version, mcversion: project.minecraft.version
+    }
+    from(sourceSets.main.resources.srcDirs) {
+        exclude "mcmod.info"
+    }
+}
+
+
+mixin {
+    add sourceSets.main, "mixins.arsenic.refmap.json"
+}
+
+jar {
+    from(configurations.embed.collect { it.isDirectory() ? it : zipTree(it) }) {
+        exclude "META-INF/MANIFEST.MF"
+        exclude "META-INF/*.SF"
+        exclude "META-INF/*.DSA"
+        exclude "META-INF/*.RSA"
+        exclude "META-INF/maven/**"
+        exclude "META-INF/MUMFREY.RSA"
+        exclude "LICENSE.txt"
+        exclude "dummyThing"
+    }
+
+    manifest.attributes(
+            "MixinConfigs"               : "mixins.arsenic.json",
+            "tweakClass"                 : "org.spongepowered.asm.launch.MixinTweaker",
+            "TweakOrder"                 : 0,
+            "FMLCorePlugin"              : "arsenic.injection.MixinLoader",
+            "FMLCorePluginContainsFMLMod": true,
+            "ForceLoadAsMod"             : true,
+            "ModSide"                    : "CLIENT"
+    )
+}
+
+idea {
+    module {
+        inheritOutputDirs = true
+    }
+}

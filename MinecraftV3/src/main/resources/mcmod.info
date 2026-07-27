@@ -1,0 +1,17 @@
+[
+    {
+        "modid": "arsenic",
+        "name": "Arsenic",
+        "description": "Cliente ligero con ClickGUI y el módulo visual FullBright.",
+        "version": "1.0",
+        "url": "",
+        "updateUrl": "",
+        "authorList": [
+            "Personal use"
+        ],
+        "credits": "",
+        "logoFile": "",
+        "screenshots": [],
+        "dependencies": []
+    }
+]
